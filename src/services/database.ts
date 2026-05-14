@@ -8,6 +8,7 @@ const COLLECTIONS = {
   tasks: 'tasks',
   activities: 'activities',
   session: 'session',
+  notifications: 'notifications',
 } as const;
 
 // Seed data for demo purposes
@@ -357,4 +358,49 @@ export const authService = {
   logout(): void {
     storage.remove(COLLECTIONS.session);
   },
+};
+
+
+export const notificationService = {
+  getAll(): AppNotification[] {
+    return storage.get<AppNotification[]>(COLLECTIONS.notifications, [])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  getByUser(userId: string): AppNotification[] {
+    return this.getAll().filter(n => n.userId === userId);
+  },
+
+  getUnreadCount(userId: string): number {
+    return this.getByUser(userId).filter(n => !n.isRead).length;
+  },
+
+  create(data: Omit<AppNotification, 'id' | 'createdAt' | 'isRead'>): AppNotification {
+    const notifications = this.getAll();
+    const notification: AppNotification = {
+      ...data,
+      id: generateId(),
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    storage.set(COLLECTIONS.notifications, [notification, ...notifications]);
+    return notification;
+  },
+
+  markAsRead(id: string): AppNotification | null {
+    const notifications = this.getAll();
+    const index = notifications.findIndex(n => n.id === id);
+    if (index === -1) return null;
+    
+    notifications[index].isRead = true;
+    storage.set(COLLECTIONS.notifications, notifications);
+    return notifications[index];
+  },
+
+  markAllAsRead(userId: string): void {
+    const notifications = this.getAll().map(n => 
+      n.userId === userId ? { ...n, isRead: true } : n
+    );
+    storage.set(COLLECTIONS.notifications, notifications);
+  }
 };

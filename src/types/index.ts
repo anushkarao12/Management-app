@@ -79,3 +79,17 @@ export interface PaginationState {
   pageSize: number;
   total: number;
 }
+
+export type NotificationType = 'task_assigned' | 'task_completed' | 'task_overdue' | 'comment_added' | 'project_updated';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  createdAt: string;
+  entityId?: string;
+  entityType?: 'task' | 'project' | 'user';
+}
