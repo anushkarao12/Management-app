@@ -1,27 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
-import { Moon, Sun, Bell, Check } from 'lucide-react';
-import { useTheme } from '@/context/theme';
+import { Bell, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/context/auth';
+import { useTheme } from '@/context/theme';
 import { useNotifications } from '@/hooks/useNotifications';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge } from '@/components/ui/Badge';
 import { formatRelativeTime } from '@/lib/utils';
-import { MobileMenuButton } from './Sidebar';
 
 interface HeaderProps {
-  title: string;
-  onMenuClick: () => void;
+  title?: string;
 }
 
-export function Header({ title, onMenuClick }: HeaderProps) {
-  const { theme, toggle } = useTheme();
+export function Header({ title }: HeaderProps) {
   const { user } = useAuth();
+  const { theme, toggle } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
   const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
       }
     };
@@ -30,77 +29,75 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-      <div className="flex items-center justify-between h-full px-4">
-        <div className="flex items-center gap-3">
-          <MobileMenuButton onClick={onMenuClick} />
-          <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">{title}</h1>
-        </div>
+    <header className="h-14 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex items-center justify-between px-4 md:px-6">
+      <div>
+        {title && <h2 className="text-sm font-medium text-neutral-900 dark:text-white">{title}</h2>}
+      </div>
 
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={toggle}
+          className="p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+        >
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+
+        <div className="relative" ref={dropdownRef}>
           <button
-            onClick={toggle}
-            className="p-2 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 transition-colors"
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
           >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-          
-          <div className="relative" ref={dropdownRef}>
-            <button 
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 transition-colors relative"
-            >
-              <Bell size={18} />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                </span>
-              )}
-            </button>
-
-            {/* Notification Dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg overflow-hidden z-50">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
-                  <span className="font-medium text-sm text-neutral-900 dark:text-white">Notifications</span>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllAsRead} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                
-                <div className="max-h-96 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-neutral-500">
-                      You're all caught up.
-                    </div>
-                  ) : (
-                    notifications.map(notif => (
-                      <button 
-                        key={notif.id}
-                        onClick={() => markAsRead(notif.id)}
-                        className={`w-full text-left px-4 py-3 border-b border-neutral-50 dark:border-neutral-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors ${!notif.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className={`text-sm ${!notif.isRead ? 'font-medium text-neutral-900 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
-                            {notif.title}
-                          </span>
-                          {!notif.isRead && <span className="h-2 w-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />}
-                        </div>
-                        <p className="text-xs text-neutral-500 line-clamp-2">{notif.message}</p>
-                        <span className="text-[10px] text-neutral-400 mt-1 block">
-                          {formatRelativeTime(notif.createdAt)}
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
             )}
-          </div>
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg z-50">
+              <div className="p-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+                <h4 className="text-sm font-medium text-neutral-900 dark:text-white">Notifications</h4>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-64 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-neutral-400">
+                    You're all caught up.
+                  </div>
+                ) : (
+                  notifications.map(notif => (
+                    <div
+                      key={notif.id}
+                      onClick={() => markAsRead(notif.id)}
+                      className={`p-3 border-b border-neutral-50 dark:border-neutral-800 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800 ${!notif.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+                    >
+                      <p className="text-sm text-neutral-900 dark:text-white">{notif.title}</p>
+                      <p className="text-xs text-neutral-500 mt-0.5">{notif.message}</p>
+                      <p className="text-xs text-neutral-400 mt-1">{formatRelativeTime(notif.createdAt)}</p>
+                      {!notif.isRead && <Badge variant="default" className="mt-1">New</Badge>}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
+        {user && (
+          <div className="flex items-center gap-2 ml-2">
+            <Avatar name={user.name} size="sm" />
+          </div>
+        )}
       </div>
     </header>
   );

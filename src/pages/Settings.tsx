@@ -58,7 +58,7 @@ export function Settings() {
             <Card>
               <CardContent className="p-6 space-y-6">
                 <h3 className="font-medium text-neutral-900 dark:text-white">Profile Information</h3>
-                
+
                 <div className="flex items-center gap-4">
                   <Avatar name={user.name} size="lg" />
                   <div>
@@ -82,7 +82,7 @@ export function Settings() {
             <Card>
               <CardContent className="p-6 space-y-4">
                 <h3 className="font-medium text-neutral-900 dark:text-white">Notification Preferences</h3>
-                
+
                 {[
                   { label: 'Email notifications', desc: 'Receive task assignment emails' },
                   { label: 'Task reminders', desc: 'Get deadline reminders' },
@@ -109,7 +109,7 @@ export function Settings() {
             <Card>
               <CardContent className="p-6 space-y-6">
                 <h3 className="font-medium text-neutral-900 dark:text-white">Appearance</h3>
-                
+
                 <div>
                   <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Theme</p>
                   <div className="flex gap-3">
@@ -141,7 +141,7 @@ export function Settings() {
             <Card>
               <CardContent className="p-6 space-y-6">
                 <h3 className="font-medium text-neutral-900 dark:text-white">Security</h3>
-                
+
                 <div className="space-y-4 max-w-sm">
                   <Input type="password" label="Current password" />
                   <Input type="password" label="New password" />

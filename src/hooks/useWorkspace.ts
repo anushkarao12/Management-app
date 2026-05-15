@@ -7,20 +7,17 @@ export function useProjects(filter?: FilterState) {
 
   const projects = useMemo(() => {
     let items = projectService.getAll();
-    
     if (filter?.search) {
       const query = filter.search.toLowerCase();
-      items = items.filter(p => 
-        p.title.toLowerCase().includes(query) || 
+      items = items.filter(p =>
+        p.title.toLowerCase().includes(query) ||
         p.description.toLowerCase().includes(query)
       );
     }
-    
     if (filter?.status && filter.status !== 'all') {
       items = items.filter(p => p.status === filter.status);
     }
-    
-    return items.sort((a, b) => 
+    return items.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [filter?.search, filter?.status, refreshKey]);
@@ -45,7 +42,14 @@ export function useProjects(filter?: FilterState) {
     return result;
   }, [refresh]);
 
-  return { projects, create, update, remove, refresh, getById: projectService.getById };
+  // FIX: Wrap getById in a callback so `this` context is preserved via
+  // the service object reference (projectService.getById already uses
+  // projectService.getAll() internally after the database.ts fix)
+  const getById = useCallback((id: string) => {
+    return projectService.getById(id);
+  }, []);
+
+  return { projects, create, update, remove, refresh, getById };
 }
 
 export function useTasks(filter?: FilterState) {
@@ -53,39 +57,33 @@ export function useTasks(filter?: FilterState) {
 
   const tasks = useMemo(() => {
     let items = taskService.getAll();
-    
     if (filter?.search) {
       const query = filter.search.toLowerCase();
-      items = items.filter(t => 
-        t.title.toLowerCase().includes(query) || 
+      items = items.filter(t =>
+        t.title.toLowerCase().includes(query) ||
         t.description.toLowerCase().includes(query)
       );
     }
-    
     if (filter?.status && filter.status !== 'all') {
       items = items.filter(t => t.status === filter.status);
     }
-    
     if (filter?.priority && filter.priority !== 'all') {
       items = items.filter(t => t.priority === filter.priority);
     }
-    
     if (filter?.projectId && filter.projectId !== 'all') {
       items = items.filter(t => t.projectId === filter.projectId);
     }
-    
     if (filter?.assigneeId) {
       items = items.filter(t => t.assigneeId === filter.assigneeId);
     }
-    
-    return items.sort((a, b) => 
+    return items.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [filter, refreshKey]);
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  const create = useCallback((data: Omit<Task, 'id' | 'createdAt' | 'comments'>) => {
+  const create = useCallback((data: Omit<Task, 'id' | 'comments' | 'createdAt'>) => {
     const result = taskService.create(data);
     refresh();
     return result;
@@ -109,16 +107,16 @@ export function useTasks(filter?: FilterState) {
     return result;
   }, [refresh]);
 
-  return { 
-    tasks, 
-    create, 
-    update, 
-    remove, 
-    addComment, 
-    refresh,
-    getById: taskService.getById,
-    getByProject: taskService.getByProject,
-  };
+  // FIX: Wrap getById in a callback to preserve proper function reference
+  const getById = useCallback((id: string) => {
+    return taskService.getById(id);
+  }, []);
+
+  const getByProject = useCallback((projectId: string) => {
+    return taskService.getByProject(projectId);
+  }, []);
+
+  return { tasks, create, update, remove, addComment, refresh, getById, getByProject };
 }
 
 export function useTeam(filter?: { search?: string; role?: string }) {
@@ -126,19 +124,16 @@ export function useTeam(filter?: { search?: string; role?: string }) {
 
   const members = useMemo(() => {
     let items = userService.getAll();
-    
     if (filter?.search) {
       const query = filter.search.toLowerCase();
-      items = items.filter(u => 
-        u.name.toLowerCase().includes(query) || 
+      items = items.filter(u =>
+        u.name.toLowerCase().includes(query) ||
         u.email.toLowerCase().includes(query)
       );
     }
-    
     if (filter?.role && filter.role !== 'all') {
       items = items.filter(u => u.role === filter.role);
     }
-    
     return items;
   }, [filter?.search, filter?.role, refreshKey]);
 
@@ -156,12 +151,12 @@ export function useTeam(filter?: { search?: string; role?: string }) {
     return result;
   }, [refresh]);
 
-  return { members, updateRole, remove, refresh, getById: userService.getById };
+  return { members, updateRole, remove, refresh, getById: (id: string) => userService.getById(id) };
 }
 
 export function useActivity(limit = 10) {
   const [refreshKey, setRefreshKey] = useState(0);
-  
+
   const activities = useMemo(() => {
     return activityService.getRecent(limit);
   }, [limit, refreshKey]);
@@ -175,18 +170,15 @@ export function useActivity(limit = 10) {
 export function useWorkspaceStats(userId?: string) {
   const projects = projectService.getAll();
   const tasks = taskService.getAll();
-  const now = new Date();
 
   return useMemo(() => {
     const completed = tasks.filter(t => t.status === 'completed').length;
     const inProgress = tasks.filter(t => t.status === 'in-progress').length;
     const todo = tasks.filter(t => t.status === 'todo').length;
-    const overdue = tasks.filter(t => 
-      t.status !== 'completed' && new Date(t.dueDate) < now
+    const overdue = tasks.filter(t =>
+      t.status !== 'completed' && new Date(t.dueDate) < new Date()
     ).length;
-    const myTasks = userId 
-      ? tasks.filter(t => t.assigneeId === userId).length 
-      : 0;
+    const myTasks = userId ? tasks.filter(t => t.assigneeId === userId).length : 0;
 
     return {
       totalProjects: projects.length,

@@ -2,30 +2,22 @@ import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from '@/context/auth';
 import { ThemeProvider } from '@/context/theme';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { Sidebar, MobileMenuButton } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
-import { LoginPage } from '@/pages/auth/LoginPage';
-import { SignupPage } from '@/pages/auth/SignupPage';
+import { Spinner } from '@/components/ui/Spinner';
 import { Dashboard } from '@/pages/Dashboard';
 import { Projects } from '@/pages/Projects';
 import { Tasks } from '@/pages/Tasks';
 import { Team } from '@/pages/Team';
 import { Settings } from '@/pages/Settings';
-import { Spinner } from '@/components/ui/Spinner';
-
-const PAGE_TITLES: Record<string, string> = {
-  dashboard: 'Overview',
-  projects: 'Projects',
-  tasks: 'Tasks',
-  team: 'Team',
-  settings: 'Settings',
-};
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { SignupPage } from '@/pages/auth/SignupPage';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
-  const [authView, setAuthView] = useState<'login' | 'signup'>('login');
-  const [page, setPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authPage, setAuthPage] = useState<'login' | 'signup'>('login');
 
   if (isLoading) {
     return (
@@ -36,13 +28,13 @@ function AppContent() {
   }
 
   if (!user) {
-    return authView === 'login' 
-      ? <LoginPage onSwitchToSignup={() => setAuthView('signup')} />
-      : <SignupPage onSwitchToLogin={() => setAuthView('login')} />;
+    return authPage === 'login'
+      ? <LoginPage onSwitchToSignup={() => setAuthPage('signup')} />
+      : <SignupPage onSwitchToLogin={() => setAuthPage('login')} />;
   }
 
   const renderPage = () => {
-    switch (page) {
+    switch (currentPage) {
       case 'dashboard': return <Dashboard />;
       case 'projects': return <Projects />;
       case 'tasks': return <Tasks />;
@@ -55,18 +47,18 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <Sidebar
-        currentPage={page}
-        onNavigate={setPage}
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
-      <div className="lg:ml-60">
-        <Header
-          title={PAGE_TITLES[page] || 'TaskFlow'}
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-        />
-        <main className="p-4 lg:p-6 max-w-6xl">
+      <div className="md:ml-56">
+        <Header />
+        <div className="flex items-center gap-2 px-4 pt-3 md:hidden">
+          <MobileMenuButton onClick={() => setSidebarOpen(!sidebarOpen)} />
+        </div>
+        <main className="p-4 md:p-6">
           {renderPage()}
         </main>
       </div>
@@ -79,13 +71,10 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppContent />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: { borderRadius: '8px', fontSize: '14px' },
-          }}
-        />
+        <Toaster position="bottom-right" toastOptions={{
+          className: 'text-sm',
+          duration: 3000,
+        }} />
       </AuthProvider>
     </ThemeProvider>
   );

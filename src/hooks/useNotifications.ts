@@ -15,7 +15,6 @@ export function useNotifications(userId?: string) {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 10 seconds to simulate live updates
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
@@ -31,11 +30,5 @@ export function useNotifications(userId?: string) {
     fetchNotifications();
   }, [userId, fetchNotifications]);
 
-  return {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    refresh: fetchNotifications
-  };
+  return { notifications, unreadCount, markAsRead, markAllAsRead, refresh: fetchNotifications };
 }

@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 const schema = z.object({
   name: z.string().min(2, 'Name required'),
   email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Min 6 characters'),
+  password: z.string().min(6, 'At least 6 characters'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -48,7 +48,7 @@ export function SignupPage({ onSwitchToLogin }: Props) {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
               label="Name"
-              placeholder="Your name"
+              placeholder="John Doe"
               error={errors.name?.message}
               {...register('name')}
             />
@@ -62,7 +62,7 @@ export function SignupPage({ onSwitchToLogin }: Props) {
             <Input
               label="Password"
               type="password"
-              placeholder="Min 6 characters"
+              placeholder="••••••••"
               error={errors.password?.message}
               {...register('password')}
             />

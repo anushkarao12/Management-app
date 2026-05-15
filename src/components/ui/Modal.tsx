@@ -17,7 +17,9 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     } else {
       document.body.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [open]);
 
   useEffect(() => {
@@ -31,27 +33,18 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div className={cn(
-          'relative w-full max-w-lg bg-white dark:bg-neutral-900 rounded-lg shadow-xl',
-          'animate-in fade-in-0 zoom-in-95 duration-200',
-          className
-        )}>
-          {title && (
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
-              <button
-                onClick={onClose}
-                className="p-1 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          )}
-          <div className="p-4">{children}</div>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className={cn('relative bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto', className)}>
+        {title && (
+          <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
+            <h3 className="font-semibold text-neutral-900 dark:text-white">{title}</h3>
+            <button onClick={onClose} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {children}
       </div>
     </div>
   );

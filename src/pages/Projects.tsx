@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, MoreHorizontal, Calendar } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -30,6 +30,7 @@ export function Projects() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const { projects, create, update, remove, getById } = useProjects({ search, status: statusFilter });
   const allUsers = userService.getAll();
@@ -53,6 +54,7 @@ export function Projects() {
     setValue('title', p.title);
     setValue('description', p.description);
     setValue('dueDate', p.dueDate.split('T')[0]);
+    setMenuOpenId(null);
     setModalOpen(true);
   };
 
@@ -76,8 +78,15 @@ export function Projects() {
   const handleDelete = (id: string) => {
     if (confirm('Delete this project?')) {
       remove(id);
+      setMenuOpenId(null);
       toast.success('Project deleted');
     }
+  };
+
+  const toggleMember = (userId: string) => {
+    setSelectedMembers(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
   };
 
   return (
@@ -144,25 +153,41 @@ export function Projects() {
                     {isAdmin && (
                       <div className="relative">
                         <button
-                          onClick={() => openEdit(project.id)}
-                          className="p-1 text-neutral-400 hover:text-neutral-600 opacity-0 group-hover:opacity-100"
+                          onClick={() => setMenuOpenId(menuOpenId === project.id ? null : project.id)}
+                          className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <MoreHorizontal size={16} />
+                          <MoreHorizontal size={16} className="text-neutral-400" />
                         </button>
+                        {menuOpenId === project.id && (
+                          <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-lg z-10">
+                            <button
+                              onClick={() => openEdit(project.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                            >
+                              <Edit2 size={14} /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(project.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
                   <h3 className="font-medium text-neutral-900 dark:text-white mb-1">{project.title}</h3>
-                  <p className="text-sm text-neutral-500 line-clamp-2 mb-4">{project.description}</p>
+                  <p className="text-sm text-neutral-500 mb-3 line-clamp-2">{project.description}</p>
 
-                  <div className="mb-4">
-                    <div className="flex justify-between text-xs text-neutral-500 mb-1">
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs text-neutral-500 mb-1">
                       <span>{done}/{tasks.length} tasks</span>
                       <span>{pct}%</span>
                     </div>
-                    <div className="h-1 bg-neutral-100 dark:bg-neutral-800 rounded-full">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full">
+                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
 
@@ -173,18 +198,20 @@ export function Projects() {
                     </div>
                     <div className="flex -space-x-1.5">
                       {members.slice(0, 3).map(m => m && (
-                        <Avatar key={m.id} name={m.name} size="sm" className="ring-2 ring-white dark:ring-neutral-900" />
+                        <Avatar key={m.id} name={m.name} size="sm" />
                       ))}
                     </div>
                   </div>
 
                   {isAdmin && (
-                    <button
-                      onClick={() => handleDelete(project.id)}
-                      className="mt-3 text-xs text-red-500 hover:text-red-600 opacity-0 group-hover:opacity-100"
-                    >
-                      Delete project
-                    </button>
+                    <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(project.id)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="destructive" className="flex-1" onClick={() => handleDelete(project.id)}>
+                        Delete
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -194,42 +221,43 @@ export function Projects() {
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Edit Project' : 'New Project'}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input label="Title" {...register('title')} error={errors.title?.message} />
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Description</label>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4">
+          <Input label="Title" error={errors.title?.message} {...register('title')} />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
             <textarea
               {...register('description')}
               rows={3}
-              className="w-full rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />
+            {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
           </div>
-          <Input type="date" label="Due Date" {...register('dueDate')} error={errors.dueDate?.message} />
+          <Input label="Due Date" type="date" error={errors.dueDate?.message} {...register('dueDate')} />
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Members</label>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Members</label>
+            <div className="flex flex-wrap gap-2">
               {allUsers.map(u => (
-                <label key={u.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedMembers.includes(u.id)}
-                    onChange={() => {
-                      setSelectedMembers(prev =>
-                        prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id]
-                      );
-                    }}
-                    className="rounded border-neutral-300"
-                  />
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => toggleMember(u.id)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    selectedMembers.includes(u.id)
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
+                  }`}
+                >
+                  <Avatar name={u.name} size="sm" className="h-5 w-5 text-[10px]" />
                   {u.name}
-                </label>
+                </button>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button type="submit">{editId ? 'Save' : 'Create'}</Button>
+          <div className="flex gap-2 pt-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button type="submit" className="flex-1">{editId ? 'Update' : 'Create'}</Button>
           </div>
         </form>
       </Modal>
