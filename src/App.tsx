@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from '@/context/auth';
 import { ThemeProvider } from '@/context/theme';
-import { Sidebar, MobileMenuButton } from '@/components/layout/Sidebar';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Spinner } from '@/components/ui/Spinner';
 import { Dashboard } from '@/pages/Dashboard';
@@ -44,20 +44,20 @@ function AppContent() {
     }
   };
 
+  const openSidebar = () => setSidebarOpen(true);
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <Sidebar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
         isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onClose={closeSidebar}
       />
 
       <div className="md:ml-56">
-        <Header />
-        <div className="flex items-center gap-2 px-4 pt-3 md:hidden">
-          <MobileMenuButton onClick={() => setSidebarOpen(!sidebarOpen)} />
-        </div>
+        <Header onMenuClick={openSidebar} />
         <main className="p-4 md:p-6">
           {renderPage()}
         </main>

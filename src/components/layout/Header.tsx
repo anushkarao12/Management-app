@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Moon, Sun } from 'lucide-react';
+import { Bell, Moon, Sun, Menu } from 'lucide-react';
 import { useAuth } from '@/context/auth';
 import { useTheme } from '@/context/theme';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -9,9 +9,10 @@ import { formatRelativeTime } from '@/lib/utils';
 
 interface HeaderProps {
   title?: string;
+  onMenuClick?: () => void;
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, onMenuClick }: HeaderProps) {
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
@@ -29,8 +30,18 @@ export function Header({ title }: HeaderProps) {
   }, []);
 
   return (
-    <header className="h-14 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex items-center justify-between px-4 md:px-6">
-      <div>
+    <header className="sticky top-0 z-30 h-14 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex items-center justify-between px-4 md:px-6">
+      <div className="flex items-center gap-3">
+        {/* Mobile menu button - visible only on mobile */}
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="md:hidden p-2 -ml-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+        )}
         {title && <h2 className="text-sm font-medium text-neutral-900 dark:text-white">{title}</h2>}
       </div>
 
@@ -38,6 +49,7 @@ export function Header({ title }: HeaderProps) {
         <button
           onClick={toggle}
           className="p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
@@ -46,6 +58,7 @@ export function Header({ title }: HeaderProps) {
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+            aria-label="Notifications"
           >
             <Bell size={18} />
             {unreadCount > 0 && (
